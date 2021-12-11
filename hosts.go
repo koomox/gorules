@@ -37,7 +37,7 @@ func (c *Filter) AddHosts(addr, host string) {
 func (c *Filter) SetHosts(addr, host string) {
 	if c.ruleHosts != nil {
 		for i := 0; i < len(c.ruleHosts); i++ {
-			if c.ruleHosts[i].Addr == addr {
+			if c.ruleHosts[i].Host == host {
 				c.ruleHosts[i] = &RuleHost{Addr: addr, Host: host}
 				return
 			}
