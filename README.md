@@ -1,0 +1,2 @@
+# gorules
+golang rules filter
