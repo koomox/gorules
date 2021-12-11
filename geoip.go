@@ -21,7 +21,7 @@ func validPath(path string) (bool, error) {
 func FromGeoIP(name string) (db *geoip2.Reader, err error) {
 	if ok, err := validPath(name); !ok || err != nil {
 		err = errors.New("load GeoIP file failed")
-		return
+		return nil, err
 	}
 	return geoip2.Open(name)
 }
