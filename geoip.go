@@ -73,3 +73,19 @@ func resolveRequestIPAddr(host string) []net.IP {
 	}
 	return ips
 }
+
+func (c *Filter) AddGeoIP(match, action string) {
+	c.ruleGeoIP = append(c.ruleGeoIP, &Rule{Match: match, Action: strings.ToLower(action)})
+}
+
+func (c *Filter) SetGeoIP(match, action string) {
+	if c.ruleGeoIP != nil {
+		for i := 0; i < len(c.ruleGeoIP); i++ {
+			if c.ruleGeoIP[i].Match == match {
+				c.ruleGeoIP[i] = &Rule{Match: match, Action: strings.ToLower(action)}
+				return
+			}
+		}
+	}
+	c.ruleGeoIP = append(c.ruleGeoIP, &Rule{Match: match, Action: strings.ToLower(action)})
+}

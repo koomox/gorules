@@ -34,6 +34,18 @@ func (c *Filter) AddHosts(addr, host string) {
 	c.ruleHosts = append(c.ruleHosts, &RuleHost{Addr: addr, Host: host})
 }
 
+func (c *Filter) SetHosts(addr, host string) {
+	if c.ruleHosts != nil {
+		for i := 0; i < len(c.ruleHosts); i++ {
+			if c.ruleHosts[i].Addr == addr {
+				c.ruleHosts[i] = &RuleHost{Addr: addr, Host: host}
+				return
+			}
+		}
+	}
+	c.ruleHosts = append(c.ruleHosts, &RuleHost{Addr: addr, Host: host})
+}
+
 func FromHosts() (hosts []*RuleHost) {
 	f := hostsDir()
 	b, err := ioutil.ReadFile(f)
