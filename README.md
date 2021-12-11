@@ -74,7 +74,7 @@ func main() {
 	match, action = rules.MatchExtension("netflix.com")
 	fmt.Println(match, action)
 
-	rules.AddHosts("activate.adobe.com", "0.0.0.0")
+	rules.SetHosts("0.0.0.0", "activate.adobe.com")
 	fmt.Println(rules.MatchHosts("activate.adobe.com"))
 	fmt.Println(rules.MatchGit("github.com"))
 	fmt.Println(rules.MatchPort("443"))
