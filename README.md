@@ -12,6 +12,12 @@ import (
 	"github.com/koomox/gorules"
 )
 
+const (
+	typeIPv4 byte = 0x01 // type is ipv4 address
+	typeDm   byte = 0x03 // type is domain address
+	typeIPv6 byte = 0x04 // type is ipv6 address
+)
+
 var (
 	config = []byte(`
 [General]
@@ -63,9 +69,12 @@ func main() {
 
 	match, action := rules.MatchBypass("localhost")
 	fmt.Println(match, action)
-	match, action = rules.MatchRule("google.com", 0x03)
+	match, action = rules.MatchRule("google.com", typeDm)
+	fmt.Println(match, action)
+	match, action = rules.MatchExtension("netflix.com")
 	fmt.Println(match, action)
 
+	rules.AddHosts("activate.adobe.com", "0.0.0.0")
 	fmt.Println(rules.MatchHosts("activate.adobe.com"))
 	fmt.Println(rules.MatchGit("github.com"))
 	fmt.Println(rules.MatchPort("443"))

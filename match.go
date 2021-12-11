@@ -91,3 +91,23 @@ func (c *Filter) MatchRule(host string, typeHost byte) (match, action string) {
 	}
 	return strings.ToLower(rule.Match), strings.ToLower(rule.Action)
 }
+
+func (c *Filter) MatchExtension(host string) (match, action string) {
+	if c.extDomains != nil {
+		for _, rule := range c.extDomains { // "DOMAIN"
+			if host == rule.Match {
+				return rule.Match, rule.Action
+			}
+		}
+	}
+	if c.extSuffixDomains != nil {
+		s := domainSuffix(host)
+		for _, rule := range c.extSuffixDomains { // "DOMAIN-SUFFIX"
+			if s == rule.Match {
+				return rule.Match, rule.Action
+			}
+		}
+	}
+
+	return
+}
