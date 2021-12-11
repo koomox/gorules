@@ -7,6 +7,15 @@ import (
 	"sync"
 )
 
+type Match interface {
+	MatchBypass(host string) (match, action string)
+	MatchGit(host string) bool
+	MatchHosts(host string) string
+	MatchPort(port string) bool
+	MatchRule(host string, typeHost byte) (match, action string)
+	MatchExtension(host string) (match, action string)
+}
+
 type Filter struct {
 	sync.RWMutex
 	useGeoIP bool
