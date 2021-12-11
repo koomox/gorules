@@ -130,20 +130,15 @@ func (c *Filter) matchIpRule(addr string) *Rule {
 	}
 	if nil != ips { // GEOIP rule
 		country := strings.ToLower(c.GeoIPs(ips)) // return country
-		switch country {
-		case "cn":
-			return &Rule{Match: "GEOIP", Action: "DIRECT"}
-		default:
-			if c.ruleGeoIP != nil {
-				for _, rule := range c.ruleGeoIP {
-					if strings.ToLower(rule.Match) == country {
-						return rule
-					}
+		if c.ruleGeoIP != nil {
+			for _, rule := range c.ruleGeoIP {
+				if strings.ToLower(rule.Match) == country {
+					return rule
 				}
 			}
-
-			return &Rule{Match: "GEOIP", Action: "PROXY"}
 		}
+
+		return &Rule{Match: "GEOIP", Action: country}
 	}
 	return nil
 }
