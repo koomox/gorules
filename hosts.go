@@ -6,16 +6,13 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"regexp"
 	"runtime"
 	"strings"
 )
 
 var (
-	errHostsTooShort     = errors.New("hosts item too short")
-	errHostsIsNull       = errors.New("hosts item is null")
-	ip4ExpMustCompile    = regexp.MustCompile(`((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)`)
-	domainExpMustCompile = regexp.MustCompile(`[a-zA-Z0-9][a-zA-Z0-9_-]{0,62}(\.[a-zA-Z0-9][a-zA-Z0-9_-]{0,62})*(\.[a-zA-Z][a-zA-Z0-9]{0,10}){1}`)
+	errHostsTooShort = errors.New("hosts item too short")
+	errHostsIsNull   = errors.New("hosts item is null")
 )
 
 func hostsDir() string {
@@ -78,10 +75,10 @@ func readHostsLine(str string) (addr, host string, err error) {
 		err = errHostsTooShort
 		return
 	}
-	addr = ip4ExpMustCompile.FindString(item[0])
-	host = domainExpMustCompile.FindString(item[1])
+	addr = ip4ExpCompile.FindString(item[0])
+	host = domainExpCompile.FindString(item[1])
 	if host == "" {
-		host = ip4ExpMustCompile.FindString(item[1])
+		host = ip4ExpCompile.FindString(item[1])
 	}
 	if addr == "" || host == "" {
 		err = errHostsIsNull

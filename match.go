@@ -47,7 +47,7 @@ func (c *Filter) matchBypass(addr string) *Rule {
 				bypass = r.MatchString(addr)
 			}
 			if bypass {
-				return &Rule{Match: "bypass", Action: "DIRECT"}
+				return &Rule{Match: "bypass", Action: ActionDirect}
 			}
 		}
 	}
@@ -89,7 +89,7 @@ func (c *Filter) MatchRule(host string, typeHost byte) (match, action string) {
 	if rule == nil {
 		return
 	}
-	return strings.ToLower(rule.Match), strings.ToLower(rule.Action)
+	return rule.Match, rule.Action
 }
 
 func (c *Filter) MatchExtension(host string) (match, action string) {

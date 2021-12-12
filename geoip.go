@@ -54,7 +54,7 @@ func (c *Filter) GeoIP(ip net.IP) string {
 	if err != nil {
 		return ""
 	}
-	return strings.ToLower(country.Country.IsoCode)
+	return strings.ToUpper(country.Country.IsoCode)
 }
 
 func resolveRequestIPAddr(host string) []net.IP {
@@ -75,17 +75,18 @@ func resolveRequestIPAddr(host string) []net.IP {
 }
 
 func (c *Filter) AddGeoIP(match, action string) {
-	c.ruleGeoIP = append(c.ruleGeoIP, &Rule{Match: match, Action: strings.ToLower(action)})
+	c.ruleGeoIP = append(c.ruleGeoIP, &Rule{Match: strings.ToUpper(match), Action: strings.ToUpper(action)})
 }
 
 func (c *Filter) SetGeoIP(match, action string) {
+	rule := &Rule{Match: strings.ToUpper(match), Action: strings.ToUpper(action)}
 	if c.ruleGeoIP != nil {
 		for i := 0; i < len(c.ruleGeoIP); i++ {
 			if c.ruleGeoIP[i].Match == match {
-				c.ruleGeoIP[i] = &Rule{Match: match, Action: strings.ToLower(action)}
+				c.ruleGeoIP[i] = rule
 				return
 			}
 		}
 	}
-	c.ruleGeoIP = append(c.ruleGeoIP, &Rule{Match: match, Action: strings.ToLower(action)})
+	c.ruleGeoIP = append(c.ruleGeoIP, rule)
 }

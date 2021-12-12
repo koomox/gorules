@@ -29,26 +29,26 @@ func (c *Filter) FromRules(b []byte) {
 		ruleName := strings.ToLower(items[0])
 		switch ruleName {
 		case "user-agent":
-			c.ruleUserAgent = append(c.ruleUserAgent, &Rule{Match: items[1], Action: strings.ToLower(items[2])})
+			c.ruleUserAgent = append(c.ruleUserAgent, &Rule{Match: items[1], Action: strings.ToUpper(items[2])})
 		case "domain":
 			key := items[1]
-			c.ruleDomains[key] = strings.ToLower(items[2])
+			c.ruleDomains[key] = strings.ToUpper(items[2])
 		case "domain-suffix":
-			c.ruleSuffixDomains.Put(items[1], &Rule{Match: items[1], Action: strings.ToLower(items[2])})
+			c.ruleSuffixDomains.Put(items[1], &Rule{Match: items[1], Action: strings.ToUpper(items[2])})
 		case "domain-country":
-			c.ruleCountryDomains = append(c.ruleCountryDomains, &Rule{Match: items[1], Action: strings.ToLower(items[2])})
+			c.ruleCountryDomains = append(c.ruleCountryDomains, &Rule{Match: items[1], Action: strings.ToUpper(items[2])})
 		case "domain-keyword":
-			c.ruleKeywordDomains = append(c.ruleKeywordDomains, &Rule{Match: items[1], Action: strings.ToLower(items[2])})
+			c.ruleKeywordDomains = append(c.ruleKeywordDomains, &Rule{Match: items[1], Action: strings.ToUpper(items[2])})
 		case "ip-cidr":
 			_, cidr, err := net.ParseCIDR(items[1])
 			if err != nil {
 				continue
 			}
-			c.ruleIPCIDR = append(c.ruleIPCIDR, &RuleIPCIDR{Match: cidr, Action: strings.ToLower(items[2])})
+			c.ruleIPCIDR = append(c.ruleIPCIDR, &RuleIPCIDR{Match: cidr, Action: strings.ToUpper(items[2])})
 		case "geoip":
-			c.ruleGeoIP = append(c.ruleGeoIP, &Rule{Match: items[1], Action: strings.ToLower(items[2])})
+			c.ruleGeoIP = append(c.ruleGeoIP, &Rule{Match: items[1], Action: strings.ToUpper(items[2])})
 		case "final":
-			c.ruleFinal = &Rule{Match: "final", Action: strings.ToUpper(items[1])}
+			c.ruleFinal = &Rule{Match: strings.ToUpper("final"), Action: strings.ToUpper(items[1])}
 		}
 	}
 
@@ -70,6 +70,11 @@ func (c *Filter) FromRules(b []byte) {
 func (c *Filter) matchRule(host string, typeHost byte) (rule *Rule) {
 	rule = c.matchBypass(host)
 	if nil == rule {
+		if typeHost == typeDm {
+			if ip4ExpCompile.MatchString(host) {
+				typeHost = typeIPv4
+			}
+		}
 		switch typeHost {
 		case typeIPv4, typeIPv6:
 			rule = c.matchIpRule(host)
@@ -81,7 +86,7 @@ func (c *Filter) matchRule(host string, typeHost byte) (rule *Rule) {
 		if nil != c.ruleFinal {
 			rule = c.ruleFinal
 		} else {
-			rule = &Rule{Match: "default", Action: "DIRECT"}
+			rule = &Rule{Match: "default", Action: ActionDirect}
 		}
 	}
 

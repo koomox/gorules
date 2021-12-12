@@ -4,6 +4,7 @@ import (
 	"github.com/koomox/redblacktree"
 	"github.com/oschwald/geoip2-golang"
 	"net"
+	"strings"
 	"sync"
 )
 
@@ -107,5 +108,5 @@ func (c *Filter) FromGit(elements ...string) {
 }
 
 func (c *Filter) FromFinal(action string) {
-	c.ruleFinal = &Rule{Match: "final", Action: action}
+	c.ruleFinal = &Rule{Match: strings.ToUpper("Final"), Action: strings.ToUpper(action)}
 }
