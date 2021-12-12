@@ -8,18 +8,15 @@ import (
 	"strings"
 )
 
-func validPath(path string) (bool, error) {
-	if _, err := os.Stat(path); err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-		return false, err
+func isExistsPath(p string) bool {
+	if _, err := os.Stat(p); err != nil {
+		return os.IsExist(err)
 	}
-	return true, nil
+	return true
 }
 
 func FromGeoIP(name string) (db *geoip2.Reader, err error) {
-	if ok, err := validPath(name); !ok || err != nil {
+	if ok := isExistsPath(name); !ok {
 		err = errors.New("load GeoIP file failed")
 		return nil, err
 	}
