@@ -70,11 +70,6 @@ func (c *Filter) FromRules(b []byte) {
 func (c *Filter) matchRule(host string, typeHost byte) (rule *Rule) {
 	rule = c.matchBypass(host)
 	if nil == rule {
-		if typeHost == typeDm {
-			if ip4ExpCompile.MatchString(host) {
-				typeHost = typeIPv4
-			}
-		}
 		switch typeHost {
 		case typeIPv4, typeIPv6:
 			rule = c.matchIpRule(host)
