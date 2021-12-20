@@ -1,6 +1,9 @@
 package gorules
 
-import "regexp"
+import (
+	"regexp"
+	"os"
+)
 
 var (
 	ip4ExpCompile        = regexp.MustCompile(`^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$`)
@@ -8,6 +11,13 @@ var (
 	ip4ExpMustCompile    = regexp.MustCompile(`((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)`)
 	domainExpMustCompile = regexp.MustCompile(`[a-zA-Z0-9][a-zA-Z0-9_-]{0,62}(\.[a-zA-Z0-9][a-zA-Z0-9_-]{0,62})*(\.[a-zA-Z][a-zA-Z0-9]{0,10}){1}`)
 )
+
+func isExistsPath(p string) bool {
+	if _, err := os.Stat(p); err != nil {
+		return os.IsExist(err)
+	}
+	return true
+}
 
 func domainSuffix(s string) string {
 	i := len(s)

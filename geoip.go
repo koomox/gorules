@@ -4,16 +4,8 @@ import (
 	"errors"
 	"github.com/oschwald/geoip2-golang"
 	"net"
-	"os"
 	"strings"
 )
-
-func isExistsPath(p string) bool {
-	if _, err := os.Stat(p); err != nil {
-		return os.IsExist(err)
-	}
-	return true
-}
 
 func FromGeoIP(name string) (db *geoip2.Reader, err error) {
 	if ok := isExistsPath(name); !ok {

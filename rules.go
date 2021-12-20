@@ -35,8 +35,6 @@ func (c *Filter) FromRules(b []byte) {
 			c.ruleDomains[key] = strings.ToUpper(items[2])
 		case "domain-suffix":
 			c.ruleSuffixDomains.Put(items[1], &Rule{Match: items[1], Action: strings.ToUpper(items[2])})
-		case "domain-country":
-			c.ruleCountryDomains = append(c.ruleCountryDomains, &Rule{Match: items[1], Action: strings.ToUpper(items[2])})
 		case "domain-keyword":
 			c.ruleKeywordDomains = append(c.ruleKeywordDomains, &Rule{Match: items[1], Action: strings.ToUpper(items[2])})
 		case "ip-cidr":

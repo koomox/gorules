@@ -57,17 +57,13 @@ type RuleHost struct {
 	Host string `json:"domain"`
 }
 
-func New(rules []byte, useHosts bool) (element *Filter) {
+func New(rules []byte) (element *Filter) {
 	element = &Filter{
 		useGeoIP:          false,
 		useHosts:          false,
 		ruleDomains:       make(map[string]string),
 		rulePort:          redblacktree.NewWithStringComparator(),
 		ruleSuffixDomains: redblacktree.NewWithStringComparator(),
-	}
-
-	if useHosts {
-		element.FromHosts()
 	}
 	element.FromRules(rules)
 
