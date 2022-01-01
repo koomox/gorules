@@ -56,7 +56,8 @@ DST-PORT,443,HTTPS
 )
 
 func main() {
-	rules := gorules.New(config, true)
+	rules := gorules.New(config)
+	rules.FromHosts()
 	// if err := rules.FromGeoIP("GeoLite2-Country.mmdb"); err != nil {
 	// 	fmt.Println(err.Error())
 	// 	return
