@@ -68,12 +68,9 @@ func main() {
 	rules.FromFinal(gorules.ActionDirect)
 	rules.FromExtensions(extensions)
 
-	match, action := rules.MatchBypass("localhost")
-	fmt.Println(match, action)
-	match, action = rules.MatchRule("google.com", typeDm)
-	fmt.Println(match, action)
-	match, action = rules.MatchExtension("netflix.com")
-	fmt.Println(match, action)
+	fmt.Println(rules.MatchBypass("localhost"))
+	fmt.Println(rules.MatchRule("google.com", typeDm))
+	fmt.Println(rules.MatchExtension("netflix.com"))
 
 	rules.SetHosts("0.0.0.0", "activate.adobe.com")
 	fmt.Println(rules.MatchHosts("activate.adobe.com"))
