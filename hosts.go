@@ -17,13 +17,11 @@ var (
 
 func hostsDir() string {
 	switch strings.ToLower(runtime.GOOS) {
-	case "darwin", "linux":
-		return "/etc/hosts"
 	case "windows":
 		home := strings.Replace(os.Getenv("windir"), "\\", "/", -1)
 		return path.Join(home, "/System32/drivers/etc/hosts")
 	default:
-		return ""
+		return "/etc/hosts"
 	}
 }
 
