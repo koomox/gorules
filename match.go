@@ -6,27 +6,7 @@ import (
 	"strings"
 )
 
-const (
-	typeIPv4 byte = 0x01 // type is ipv4 address
-	typeDm   byte = 0x03 // type is domain address
-	typeIPv6 byte = 0x04 // type is ipv6 address
-
-	ActionAccept = "ACCEPT"
-	ActionProxy  = "PROXY"
-	ActionReject = "REJECT"
-	ActionDirect = "DIRECT"
-)
-
-func (c *Filter) MatchBypass(host string) (match, action string) {
-	r := c.matchBypass(host)
-	if r != nil {
-		return r.Match, r.Action
-	}
-
-	return
-}
-
-func (c *Filter) matchBypass(addr string) *Rule {
+func (c *Filter) MatchBypass(addr string) bool {
 	if c.bypassDomains != nil {
 		ip := net.ParseIP(addr)
 		for _, h := range c.bypassDomains {
@@ -47,19 +27,8 @@ func (c *Filter) matchBypass(addr string) *Rule {
 				bypass = r.MatchString(addr)
 			}
 			if bypass {
-				return &Rule{Match: "bypass", Action: ActionDirect}
+				return true
 			}
-		}
-	}
-
-	return nil
-}
-
-func (c *Filter) MatchGit(host string) bool {
-	s := domainSuffix(host)
-	for _, suffix := range c.ruleGit {
-		if s == suffix {
-			return true
 		}
 	}
 
@@ -84,30 +53,20 @@ func (c *Filter) MatchPort(port string) bool {
 	return false
 }
 
-func (c *Filter) MatchRule(host string, typeHost byte) (match, action string) {
-	rule := c.matchRule(host, typeHost)
-	if rule == nil {
-		return
-	}
-	return rule.Match, rule.Action
-}
-
-func (c *Filter) MatchExtension(host string) (match, action string) {
-	if c.extDomains != nil {
-		for _, rule := range c.extDomains { // "DOMAIN"
-			if host == rule.Match {
-				return rule.Match, rule.Action
-			}
+func (c *Filter) MatchRule(m Metadata) Rule {
+	host := m.Host()
+	switch m.AddrType() {
+	case AddrTypeDomainName:
+		if r := c.matchDomain(host); r != nil {
+			return r
+		}
+	case AddrTypeIPv4, AddrTypeIPv6:
+		if r := c.matchIpRule(host); r != nil {
+			return r
 		}
 	}
-	if c.extSuffixDomains != nil {
-		s := domainSuffix(host)
-		for _, rule := range c.extSuffixDomains { // "DOMAIN-SUFFIX"
-			if s == rule.Match {
-				return rule.Match, rule.Action
-			}
-		}
+	if c.ruleFinal != nil {
+		return c.ruleFinal
 	}
-
-	return
+	return &IRule{ruleType: 0, word: "match", adapter: ActionDirect}
 }

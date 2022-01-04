@@ -4,8 +4,16 @@ import (
 	"errors"
 	"github.com/oschwald/geoip2-golang"
 	"net"
+	"os"
 	"strings"
 )
+
+func isExistsPath(p string) bool {
+	if _, err := os.Stat(p); err != nil {
+		return os.IsExist(err)
+	}
+	return true
+}
 
 func FromGeoIP(name string) (db *geoip2.Reader, err error) {
 	if ok := isExistsPath(name); !ok {
@@ -43,7 +51,7 @@ func (c *Filter) GeoIP(ip net.IP) string {
 	if err != nil {
 		return ""
 	}
-	return strings.ToUpper(country.Country.IsoCode)
+	return country.Country.IsoCode
 }
 
 func resolveRequestIPAddr(host string) []net.IP {
@@ -63,15 +71,15 @@ func resolveRequestIPAddr(host string) []net.IP {
 	return ips
 }
 
-func (c *Filter) AddGeoIP(match, action string) {
-	c.ruleGeoIP = append(c.ruleGeoIP, &Rule{Match: strings.ToUpper(match), Action: strings.ToUpper(action)})
+func (c *Filter) AddGeoIP(match, adapter string) {
+	c.ruleGeoIP = append(c.ruleGeoIP, &IRule{ruleType: RuleTypeGeoIP, word: strings.ToUpper(match), adapter: strings.ToUpper(adapter)})
 }
 
-func (c *Filter) SetGeoIP(match, action string) {
-	rule := &Rule{Match: strings.ToUpper(match), Action: strings.ToUpper(action)}
+func (c *Filter) SetGeoIP(match, adapter string) {
+	rule := &IRule{ruleType: RuleTypeGeoIP, word: strings.ToUpper(match), adapter: strings.ToUpper(adapter)}
 	if c.ruleGeoIP != nil {
 		for i := 0; i < len(c.ruleGeoIP); i++ {
-			if c.ruleGeoIP[i].Match == match {
+			if c.ruleGeoIP[i].word == match {
 				c.ruleGeoIP[i] = rule
 				return
 			}

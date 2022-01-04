@@ -9,6 +9,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/koomox/goproxy/tunnel"
 	"github.com/koomox/gorules"
 )
 
@@ -38,9 +39,10 @@ GEOIP,CN,DIRECT
 FINAL,DIRECT
 `)
 	extensions = []byte(`
-DOMAIN-COUNTRY,.cn,DIRECT
-DOMAIN-COUNTRY,.jp,PROXY
 DOMAIN,scholar.google.com,US
+DOMAIN-SUFFIX,.cn,DIRECT
+DOMAIN-SUFFIX,.us,PROXY
+DOMAIN-SUFFIX,.ca,PROXY
 DOMAIN-SUFFIX,netflix.com,NETFLIX
 DOMAIN-SUFFIX,nflxext.com,NETFLIX
 DOMAIN-SUFFIX,nflxso.net,NETFLIX
@@ -55,6 +57,12 @@ DST-PORT,443,HTTPS
 `)
 )
 
+func MatchRule(host string, rules gorules.Match) {
+	addr, _ := tunnel.FromAddr("tcp", host+":443")
+	r := rules.MatchRule(addr)
+	fmt.Println(host, r.String(), r.Adapter())
+}
+
 func main() {
 	rules := gorules.New(config)
 	rules.FromHosts()
@@ -63,18 +71,19 @@ func main() {
 	// 	return
 	// }
 
-	rules.FromGit("github.com", "golang.org", "bitbucket.org", "gitlab.com")
 	rules.FromPort("80", "443")
 	rules.FromFinal(gorules.ActionDirect)
 	rules.FromExtensions(extensions)
 
 	fmt.Println(rules.MatchBypass("localhost"))
 	fmt.Println(rules.MatchRule("google.com", typeDm))
-	fmt.Println(rules.MatchExtension("netflix.com"))
+	MatchRule("github.com", rules)
+	MatchRule("china.com.cn", rules)
+	MatchRule("netflix.com", rules)
+	MatchRule("pinterest.ca", rules)
 
 	rules.SetHosts("0.0.0.0", "activate.adobe.com")
 	fmt.Println(rules.MatchHosts("activate.adobe.com"))
-	fmt.Println(rules.MatchGit("github.com"))
 	fmt.Println(rules.MatchPort("443"))
 }
 ```

@@ -29,24 +29,25 @@ func (c *Filter) FromRules(b []byte) {
 		ruleName := strings.ToLower(items[0])
 		switch ruleName {
 		case "user-agent":
-			c.ruleUserAgent = append(c.ruleUserAgent, &Rule{Match: items[1], Action: strings.ToUpper(items[2])})
+			c.ruleUserAgent = append(c.ruleUserAgent, &IRule{ruleType: RuleTypeUserAgent, word: strings.ToLower(items[1]), adapter: strings.ToUpper(items[2])})
 		case "domain":
-			key := items[1]
-			c.ruleDomains[key] = strings.ToUpper(items[2])
+			c.ruleDomains.Put(strings.ToLower(items[1]), &IRule{ruleType: RuleTypeSuffixDomains, word: strings.ToLower(items[1]), adapter: strings.ToUpper(items[2])})
 		case "domain-suffix":
-			c.ruleSuffixDomains.Put(items[1], &Rule{Match: items[1], Action: strings.ToUpper(items[2])})
+			c.ruleSuffixDomains.Put(strings.ToLower(items[1]), &IRule{ruleType: RuleTypeSuffixDomains, word: strings.ToLower(items[1]), adapter: strings.ToUpper(items[2])})
 		case "domain-keyword":
-			c.ruleKeywordDomains = append(c.ruleKeywordDomains, &Rule{Match: items[1], Action: strings.ToUpper(items[2])})
+			c.ruleKeywordDomains = append(c.ruleKeywordDomains, &IRule{ruleType: RuleTypeKeywordDomains, word: strings.ToLower(items[1]), adapter: strings.ToUpper(items[2])})
 		case "ip-cidr":
 			_, cidr, err := net.ParseCIDR(items[1])
 			if err != nil {
 				continue
 			}
-			c.ruleIPCIDR = append(c.ruleIPCIDR, &RuleIPCIDR{Match: cidr, Action: strings.ToUpper(items[2])})
+			c.ruleIPCIDR = append(c.ruleIPCIDR, &RuleIPCIDR{cidr: cidr, adapter: strings.ToUpper(items[2])})
 		case "geoip":
-			c.ruleGeoIP = append(c.ruleGeoIP, &Rule{Match: items[1], Action: strings.ToUpper(items[2])})
+			c.ruleGeoIP = append(c.ruleGeoIP, &IRule{ruleType: RuleTypeGeoIP, word: strings.ToUpper(items[1]), adapter: strings.ToUpper(items[2])})
 		case "final":
-			c.ruleFinal = &Rule{Match: strings.ToUpper("final"), Action: strings.ToUpper(items[1])}
+			c.ruleFinal = &IRule{ruleType: RuleTypeMATCH, word: "match", adapter: strings.ToUpper(items[1])}
+		case "match":
+			c.ruleFinal = &IRule{ruleType: RuleTypeMATCH, word: "match", adapter: strings.ToUpper(items[1])}
 		}
 	}
 
@@ -65,88 +66,54 @@ func (c *Filter) FromRules(b []byte) {
 	return
 }
 
-func (c *Filter) matchRule(host string, typeHost byte) (rule *Rule) {
-	rule = c.matchBypass(host)
-	if nil == rule {
-		switch typeHost {
-		case typeIPv4, typeIPv6:
-			rule = c.matchIpRule(host)
-		case typeDm:
-			rule = c.matchDomainRule(host)
+func (c *Filter) matchDomain(host string) *IRule {
+	if v, ok := c.ruleDomains.Get(host); ok {
+		return v.(*IRule)
+	}
+	suffix := domainSuffix(host)
+	if v, ok := c.ruleSuffixDomains.Get(suffix); ok {
+		return v.(*IRule)
+	}
+	keyword := domainKeyword(host)
+	for _, v := range c.ruleKeywordDomains {
+		if v.word == keyword {
+			return v
 		}
 	}
-	if nil == rule {
-		if nil != c.ruleFinal {
-			rule = c.ruleFinal
-		} else {
-			rule = &Rule{Match: "default", Action: ActionDirect}
-		}
-	}
-
-	return rule
-}
-
-func (c *Filter) matchDomainRule(domain string) (r *Rule) {
-	//
-	if v, ok := c.ruleDomains[domain]; ok { // DOMAIN
-		return &Rule{Match: domain, Action: v}
-	}
-	d := domainSuffix(domain)
-	if d == "" {
-		return &Rule{Match: domain, Action: ActionDirect}
-	}
-	if c.ruleSuffixDomains != nil { // DOMAIN-SUFFIX
-		if v, ok := c.ruleSuffixDomains.Get(d); ok {
-			return v.(*Rule)
-		}
-	}
-	if c.ruleCountryDomains != nil { // Country
-		for _, rule := range c.ruleCountryDomains {
-			if strings.HasSuffix(domain, rule.Match) {
-				return rule
-			}
-		}
-	}
-	d = domainKeyword(domain)
-	if c.ruleKeywordDomains != nil {
-		for _, rule := range c.ruleKeywordDomains { // "DOMAIN-KEYWORD"
-			if strings.EqualFold(d, rule.Match) {
-				return rule
-			}
-		}
+	country := domainCountry(host)
+	if v, ok := c.ruleSuffixDomains.Get(country); ok {
+		return v.(*IRule)
 	}
 
 	return nil
 }
 
 // addr = host/not port
-func (c *Filter) matchIpRule(addr string) *Rule {
+func (c *Filter) matchIpRule(addr string) *IRule {
 	ips := resolveRequestIPAddr(addr) //  convert []net.IP
 	r := c.matchIPCIDR(ips)           // IP-CIDR rule
 	if r != nil {
-		return r
+		return &IRule{ruleType: RuleTypeIPCIDR, word: addr, adapter: r.adapter}
 	}
 	if nil != ips { // GEOIP rule
-		country := strings.ToLower(c.GeoIPs(ips)) // return country
+		country := c.GeoIPs(ips) // return country
 		if c.ruleGeoIP != nil {
-			for _, rule := range c.ruleGeoIP {
-				if strings.ToLower(rule.Match) == country {
-					return rule
+			for _, v := range c.ruleGeoIP {
+				if v.word == country {
+					return v
 				}
 			}
 		}
-
-		return &Rule{Match: "GEOIP", Action: country}
 	}
 	return nil
 }
 
-func (c *Filter) matchIPCIDR(ip []net.IP) *Rule {
+func (c *Filter) matchIPCIDR(ip []net.IP) *RuleIPCIDR {
 	if c.ruleIPCIDR != nil {
 		for _, addr := range ip {
-			for _, h := range c.ruleIPCIDR {
-				if h.Match.Contains(addr) {
-					return &Rule{Match: "IPCIDR", Action: h.Action}
+			for _, v := range c.ruleIPCIDR {
+				if v.cidr.Contains(addr) {
+					return v
 				}
 			}
 		}

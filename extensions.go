@@ -13,14 +13,12 @@ func (c *Filter) FromExtensions(b []byte) {
 		items := readArrayLine(line)
 		ruleName := strings.ToLower(items[0])
 		switch ruleName {
-		case "domain-country":
-			c.ruleCountryDomains = append(c.ruleCountryDomains, &Rule{Match: items[1], Action: strings.ToUpper(items[2])})
 		case "domain":
-			c.extDomains = append(c.extDomains, &Rule{Match: items[1], Action: strings.ToUpper(items[2])})
+			c.ruleDomains.Put(strings.ToLower(items[1]), &IRule{ruleType: RuleTypeDomains, word: strings.ToLower(items[1]), adapter: strings.ToUpper(items[2])})
 		case "domain-suffix":
-			c.extSuffixDomains = append(c.extSuffixDomains, &Rule{Match: items[1], Action: strings.ToUpper(items[2])})
+			c.ruleSuffixDomains.Put(strings.ToLower(items[1]), &IRule{ruleType: RuleTypeSuffixDomains, word: strings.ToLower(items[1]), adapter: strings.ToUpper(items[2])})
 		case "dst-port": // port white list
-			c.rulePort.Put(items[1], &Rule{Match: items[1], Action: strings.ToUpper(items[2])})
+			c.rulePort.Put(strings.ToLower(items[1]), &IRule{ruleType: RuleTypePort, word: strings.ToLower(items[1]), adapter: strings.ToUpper(items[2])})
 		}
 	}
 	return

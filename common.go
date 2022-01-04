@@ -8,13 +8,46 @@ import (
 	"sync"
 )
 
+const (
+	AddrTypeIPv4       byte = 0x01
+	AddrTypeDomainName byte = 0x03
+	AddrTypeIPv6       byte = 0x04
+
+	ActionAccept = "ACCEPT"
+	ActionProxy  = "PROXY"
+	ActionReject = "REJECT"
+	ActionDirect = "DIRECT"
+
+	RuleTypeBypass         byte = 0x01
+	RuleTypeHosts          byte = 0x02
+	RuleTypeDomains        byte = 0x03
+	RuleTypeSuffixDomains  byte = 0x04
+	RuleTypeKeywordDomains byte = 0x05
+	RuleTypeUserAgent      byte = 0x06
+	RuleTypeIPCIDR         byte = 0x07
+	RuleTypeGeoIP          byte = 0x08
+	RuleTypePort           byte = 0x09
+	RuleTypeFinal          byte = 0x0A
+	RuleTypeMATCH          byte = 0x0B
+)
+
+type Metadata interface {
+	AddrType() byte
+	Port() string
+	Host() string
+}
+
+type Rule interface {
+	RuleType() byte
+	Adapter() string
+	String() string
+}
+
 type Match interface {
-	MatchBypass(host string) (match, action string)
-	MatchGit(host string) bool
-	MatchHosts(host string) string
-	MatchPort(port string) bool
-	MatchRule(host string, typeHost byte) (match, action string)
-	MatchExtension(host string) (match, action string)
+	MatchBypass(string) bool
+	MatchHosts(string) string
+	MatchPort(string) bool
+	MatchRule(Metadata) Rule
 }
 
 type Filter struct {
@@ -28,41 +61,50 @@ type Filter struct {
 	systemBypass       []string
 	ruleHosts          []*RuleHost // local hosts
 	rulePort           *redblacktree.Tree
-	ruleDomains        map[string]string
+	ruleDomains        *redblacktree.Tree
 	ruleSuffixDomains  *redblacktree.Tree
 	ruleGit            []string
-	ruleCountryDomains []*Rule
-	ruleKeywordDomains []*Rule
-	ruleUserAgent      []*Rule
+	ruleKeywordDomains []*IRule
+	ruleUserAgent      []*IRule
 	ruleIPCIDR         []*RuleIPCIDR
-	ruleGeoIP          []*Rule
-	ruleFinal          *Rule
-
-	extDomains       []*Rule
-	extSuffixDomains []*Rule
+	ruleGeoIP          []*IRule
+	ruleFinal          *IRule
 }
 
-type Rule struct {
-	Match  string `json:"match"`
-	Action string `json:"action"`
+type IRule struct {
+	ruleType byte
+	word     string
+	adapter  string
 }
 
 type RuleIPCIDR struct {
-	Match  *net.IPNet `json:"match"`
-	Action string     `json:"action"`
+	cidr    *net.IPNet
+	adapter string
 }
 
 type RuleHost struct {
-	Addr string `json:"addr"`
-	Host string `json:"domain"`
+	Addr string
+	Host string
+}
+
+func (r *IRule) RuleType() byte {
+	return r.ruleType
+}
+
+func (r *IRule) Adapter() string {
+	return r.adapter
+}
+
+func (r *IRule) String() string {
+	return RuleType(r.ruleType)
 }
 
 func New(rules []byte) (element *Filter) {
 	element = &Filter{
 		useGeoIP:          false,
 		useHosts:          false,
-		ruleDomains:       make(map[string]string),
 		rulePort:          redblacktree.NewWithStringComparator(),
+		ruleDomains:       redblacktree.NewWithStringComparator(),
 		ruleSuffixDomains: redblacktree.NewWithStringComparator(),
 	}
 	element.FromRules(rules)
@@ -93,16 +135,39 @@ func (c *Filter) FromHosts() {
 
 func (c *Filter) FromPort(elements ...string) {
 	for _, v := range elements {
-		c.rulePort.Put(v, &Rule{Match: v, Action: ActionAccept})
+		c.rulePort.Put(strings.ToLower(v), &IRule{ruleType: RuleTypePort, word: strings.ToLower(v), adapter: ActionAccept})
 	}
 }
 
-func (c *Filter) FromGit(elements ...string) {
-	for _, v := range elements {
-		c.ruleGit = append(c.ruleGit, v)
-	}
+func (c *Filter) FromFinal(adapter string) {
+	c.ruleFinal = &IRule{ruleType: RuleTypeMATCH, word: "match", adapter: strings.ToUpper(adapter)}
 }
 
-func (c *Filter) FromFinal(action string) {
-	c.ruleFinal = &Rule{Match: strings.ToUpper("Final"), Action: strings.ToUpper(action)}
+func RuleType(rt byte) string {
+	switch rt {
+	case RuleTypeBypass:
+		return "bypass"
+	case RuleTypeHosts:
+		return "hosts"
+	case RuleTypeDomains:
+		return "domain"
+	case RuleTypeSuffixDomains:
+		return "domain-suffix"
+	case RuleTypeKeywordDomains:
+		return "domain-keyword"
+	case RuleTypeUserAgent:
+		return "user-agent"
+	case RuleTypeIPCIDR:
+		return "ip-cidr"
+	case RuleTypeGeoIP:
+		return "geoip"
+	case RuleTypePort:
+		return "port"
+	case RuleTypeFinal:
+		return "final"
+	case RuleTypeMATCH:
+		return "match"
+	default:
+		return "Unknown"
+	}
 }
