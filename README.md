@@ -76,7 +76,8 @@ func main() {
 	rules.FromExtensions(extensions)
 
 	fmt.Println(rules.MatchBypass("localhost"))
-	fmt.Println(rules.MatchRule("google.com", typeDm))
+	MatchRule("google.com", rules)
+	MatchRule("scholar.google.com", rules)
 	MatchRule("github.com", rules)
 	MatchRule("china.com.cn", rules)
 	MatchRule("netflix.com", rules)
