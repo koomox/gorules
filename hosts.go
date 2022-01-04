@@ -75,10 +75,10 @@ func readHostsLine(str string) (addr, host string, err error) {
 		err = errHostsTooShort
 		return
 	}
-	addr = ip4ExpCompile.FindString(item[0])
-	host = domainExpCompile.FindString(item[1])
+	addr = ip4ExpMustCompile.FindString(item[0])
+	host = domainExpMustCompile.FindString(item[1])
 	if host == "" {
-		host = ip4ExpCompile.FindString(item[1])
+		host = ip4ExpMustCompile.FindString(item[1])
 	}
 	if addr == "" || host == "" {
 		err = errHostsIsNull
