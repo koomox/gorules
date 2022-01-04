@@ -13,12 +13,6 @@ import (
 	"github.com/koomox/gorules"
 )
 
-const (
-	typeIPv4 byte = 0x01 // type is ipv4 address
-	typeDm   byte = 0x03 // type is domain address
-	typeIPv6 byte = 0x04 // type is ipv6 address
-)
-
 var (
 	config = []byte(`
 [General]
