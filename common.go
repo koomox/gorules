@@ -35,6 +35,7 @@ type Metadata interface {
 	AddrType() byte
 	Port() string
 	Host() string
+	String() string
 }
 
 type Rule interface {
