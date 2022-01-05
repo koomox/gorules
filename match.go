@@ -53,7 +53,7 @@ func (c *Filter) MatchPort(port string) bool {
 	return false
 }
 
-func (c *Filter) MatchRule(m Metadata) Rule {
+func (c *Filter) MatchRule(m Metadata) Rules {
 	host := m.Host()
 	switch m.AddrType() {
 	case AddrTypeDomainName:
@@ -68,5 +68,5 @@ func (c *Filter) MatchRule(m Metadata) Rule {
 	if c.ruleFinal != nil {
 		return c.ruleFinal
 	}
-	return &IRule{ruleType: 0, word: "match", adapter: ActionDirect}
+	return &Rule{ruleType: 0, word: "match", adapter: ActionDirect}
 }
